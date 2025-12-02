@@ -15,12 +15,12 @@ Datastar enables real-time, server-driven UI updates using Server-Sent Events (S
 
 ## Installation
 
-Add `datastar` to your list of dependencies in `mix.exs`:
+Add `datastar_ex` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:datastar, "~> 0.1.0"}
+    {:datastar_ex, "~> 0.1.0"}
   ]
 end
 ```

@@ -6,7 +6,7 @@ defmodule Datastar.MixProject do
 
   def project do
     [
-      app: :datastar,
+      app: :datastar_ex,
       version: @version,
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
@@ -14,7 +14,7 @@ defmodule Datastar.MixProject do
       description: description(),
       package: package(),
       docs: docs(),
-      name: "Datastar",
+      name: "DatastarEx",
       source_url: @source_url
     ]
   end
@@ -47,7 +47,7 @@ defmodule Datastar.MixProject do
         "GitHub" => @source_url,
         "Datastar" => "https://data-star.dev"
       },
-      maintainers: ["Your Name"]
+      maintainers: ["mmanley"]
     ]
   end
 
