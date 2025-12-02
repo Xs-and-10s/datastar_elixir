@@ -28,8 +28,8 @@ defmodule Datastar.MixProject do
   defp deps do
     [
       {:jason, "~> 1.4"},
-      {:plug, "~> 1.14", optional: true},
-      {:ex_doc, "~> 0.31", only: :dev, runtime: false}
+      {:plug, "~> 1.15", optional: true},
+      {:ex_doc, "~> 0.36", only: :dev, runtime: false}
     ]
   end
 
