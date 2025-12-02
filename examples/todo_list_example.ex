@@ -26,6 +26,29 @@ defmodule Datastar.Examples.TodoListExample do
         end
       end
 
+  ## Frontend HTML
+
+      <div id="todo-app" data-signals="{todos: [], newTodoText: ''}">
+        <h1>Todo List</h1>
+
+        <div class="add-todo">
+          <input
+            type="text"
+            data-bind:newTodoText
+            placeholder="Enter new todo"
+          />
+          <button data-on:click="@post('/todos/add', {text: $newTodoText}); $newTodoText = ''">
+            Add Todo
+          </button>
+        </div>
+
+        <ul id="todo-list">
+          <!-- Todo items will be added here dynamically -->
+        </ul>
+      </div>
+
+      <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/[email protected]/bundles/datastar.js"></script>
+
   """
 
   alias Datastar.{SSE, Elements, Signals, Script}
@@ -48,9 +71,9 @@ defmodule Datastar.Examples.TodoListExample do
     # Render the new todo item
     todo_html = """
     <li id="todo-#{id}" class="todo-item">
-      <input type="checkbox" data-on-change="@@post('/todos/#{id}/toggle')" />
+      <input type="checkbox" data-on:change="@post('/todos/#{id}/toggle')" />
       <span>#{text}</span>
-      <button data-on-click="@@delete('/todos/#{id}')">Delete</button>
+      <button data-on:click="@delete('/todos/#{id}')">Delete</button>
     </li>
     """
 

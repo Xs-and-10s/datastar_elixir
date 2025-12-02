@@ -29,18 +29,15 @@ defmodule Datastar.Examples.CounterExample do
 
   ## Frontend HTML
 
-      <div id="counter-app">
+      <div id="counter-app" data-signals="{count: 0}">
         <h1>Counter</h1>
-        <div id="counter-display">Count: 0</div>
-        <button data-on-click="@@get('/counter/increment')">Increment</button>
-        <button data-on-click="@@get('/counter/decrement')">Decrement</button>
-        <button data-on-click="@@get('/counter/reset')">Reset</button>
+        <div id="counter-display">Count: <span data-text="$count"></span></div>
+        <button data-on:click="@get('/counter/increment')">Increment</button>
+        <button data-on:click="@get('/counter/decrement')">Decrement</button>
+        <button data-on:click="@get('/counter/reset')">Reset</button>
       </div>
 
-      <script type="module">
-        import { Datastar } from 'https://cdn.jsdelivr.net/npm/@sudodevnull/datastar';
-        Datastar.load();
-      </script>
+      <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/[email protected]/bundles/datastar.js"></script>
 
   """
 
