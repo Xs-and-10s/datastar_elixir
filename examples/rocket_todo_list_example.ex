@@ -28,53 +28,56 @@ defmodule Datastar.Examples.RocketTodoListExample do
 
   ## Frontend HTML (Requires Datastar Pro with Rocket)
 
-      <!-- Define the Rocket component -->
-      <template data-rocket:todo-list data-props:todos="array|=[]">
-        <script>
-          $$newTodoText = ''
-        </script>
+      <!-- Initialize global signal for todos -->
+      <div data-signals="{todos: []}">
+        <!-- Define the Rocket component -->
+        <template data-rocket:todo-list data-props:todos="array|=[]">
+          <script>
+            $$newTodoText = ''
+          </script>
 
-        <h1>Todo List (Rocket Edition)</h1>
+          <h1>Todo List (Rocket Edition)</h1>
 
-        <div class="add-todo">
-          <input
-            type="text"
-            data-bind:newTodoText
-            placeholder="Enter new todo"
-          />
-          <button data-on:click="@post('/todos/add', {text: $$newTodoText}); $$newTodoText = ''">
-            Add Todo
-          </button>
-        </div>
+          <div class="add-todo">
+            <input
+              type="text"
+              data-bind:newTodoText
+              placeholder="Enter new todo"
+            />
+            <button data-on:click="@post('/todos/add', {text: $$newTodoText}); $$newTodoText = ''">
+              Add Todo
+            </button>
+          </div>
 
-        <template data-if="$$todos.length > 0">
-          <ul id="todo-list">
-            <template data-for="todo in $$todos" data-key="todo.id">
-              <li data-class:completed="todo.completed">
-                <input
-                  type="checkbox"
-                  data-bind:checked="todo.completed"
-                  data-on:change="@post('/todos/' + todo.id + '/toggle')"
-                />
-                <span data-text="todo.text"></span>
-                <button data-on:click="@delete('/todos/' + todo.id)">Delete</button>
-              </li>
-            </template>
-          </ul>
+          <template data-if="$$todos.length > 0">
+            <ul id="todo-list">
+              <template data-for="todo in $$todos" data-key="todo.id">
+                <li data-class:completed="todo.completed">
+                  <input
+                    type="checkbox"
+                    data-bind:checked="todo.completed"
+                    data-on:change="@post('/todos/' + todo.id + '/toggle')"
+                  />
+                  <span data-text="todo.text"></span>
+                  <button data-on:click="@delete('/todos/' + todo.id)">Delete</button>
+                </li>
+              </template>
+            </ul>
+          </template>
+
+          <template data-else>
+            <p class="empty-message">No todos yet. Add one above!</p>
+          </template>
+
+          <div class="todo-stats">
+            <span data-text="$$todos.length + ' total'"></span>
+            <span data-text="$$todos.filter(t => t.completed).length + ' completed'"></span>
+          </div>
         </template>
 
-        <template data-else>
-          <p class="empty-message">No todos yet. Add one above!</p>
-        </template>
-
-        <div class="todo-stats">
-          <span data-text="$$todos.length + ' total'"></span>
-          <span data-text="$$todos.filter(t => t.completed).length + ' completed'"></span>
-        </div>
-      </template>
-
-      <!-- Use the component -->
-      <todo-list></todo-list>
+        <!-- Use the component, binding global $todos signal to component $$todos prop -->
+        <todo-list data-attr:todos="$todos"></todo-list>
+      </div>
 
       <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.5/bundles/datastar.js"></script>
 
