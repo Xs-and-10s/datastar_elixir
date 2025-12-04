@@ -6,12 +6,12 @@ Datastar enables real-time, server-driven UI updates using Server-Sent Events (S
 
 ## Features
 
-- 🔄 **Server-Sent Events (SSE)** - Stream real-time updates to connected clients
-- 📊 **Signal Management** - Read and patch client-side reactive state
-- 🎨 **DOM Manipulation** - Update, append, prepend, and remove HTML elements
-- 🚀 **JavaScript Execution** - Execute scripts, log to console, and dispatch events
-- 🔀 **Navigation Control** - Redirect and manipulate browser history
-- 🎯 **Type-Safe** - Leverages Elixir's pattern matching and type specs
+- **Server-Sent Events (SSE)** - Stream real-time updates to connected clients
+- **Signal Management** - Read and patch client-side reactive state
+- **DOM Manipulation** - Update, append, prepend, and remove HTML elements
+- **JavaScript Execution** - Execute scripts, log to console, and dispatch events
+- **Navigation Control** - Redirect and manipulate browser history
+- **Type-Safe** - Leverages Elixir's pattern matching and type specs
 
 ## Installation
 
@@ -39,7 +39,10 @@ defmodule MyAppWeb.DatastarController do
     |> put_resp_content_type("text/event-stream")
     |> send_chunked(200)
     |> SSE.new()
-    |> Elements.patch("<div>Hello, Datastar!</div>", selector: "#content")
+    |> Elements.patch(
+      "<div id='content'>Hello, Datastar!</div>",
+      selector: "#content"
+    )
   end
 end
 ```
@@ -60,7 +63,10 @@ def handle_request(conn, _params) do
   |> send_chunked(200)
   |> SSE.new()
   |> Signals.patch(%{count: count + 1})
-  |> Elements.patch("<div>Count: #{count + 1}</div>", selector: "#counter")
+  |> Elements.patch(
+    "<div id='counter'>Count: #{count + 1}</div>",
+    selector: "#counter"
+  )
 end
 ```
 
@@ -74,7 +80,7 @@ sse
 |> Elements.patch("<div id='box'>New content</div>", selector: "#box")
 
 # Replace inner HTML only
-|> Elements.patch("<p>Inner content</p>", selector: "#container", mode: :inner)
+|> Elements.patch("<p id='container'>Inner content</p>", selector: "#container", mode: :inner)
 
 # Append to element
 |> Elements.patch("<li>New item</li>", selector: "ul", mode: :append)
@@ -83,10 +89,10 @@ sse
 |> Elements.patch("<li>First item</li>", selector: "ul", mode: :prepend)
 
 # Insert before element
-|> Elements.patch("<div>Before</div>", selector: "#target", mode: :before)
+|> Elements.patch("<div>Before target</div>", selector: "#target", mode: :before)
 
 # Insert after element
-|> Elements.patch("<div>After</div>", selector: "#target", mode: :after)
+|> Elements.patch("<div>After target</div>", selector: "#target", mode: :after)
 ```
 
 ### Removing Elements
@@ -113,7 +119,16 @@ sse
 |> Script.replace_url("/new-path")
 
 # Custom events
-|> Script.dispatch_custom_event("user-updated", %{id: 123, name: "Alice"})
+|> Script.dispatch_custom_event(
+  "user:updated",
+  %{id: 123, name: "Alice"}
+)
+# Custom events with callback
+|> Script.dispatch_custom_event(
+  "user:updated",
+  %{id: 123, name: "Alice"},
+  callback: "handleUserUpdate"
+)
 
 # Prefetch URLs
 |> Script.prefetch(["/dashboard", "/profile"])
@@ -125,20 +140,20 @@ sse
 
 Core module for Server-Sent Event streaming:
 
-- `new(conn)` - Create a new SSE generator from a Plug connection
-- `send_event(sse, event_type, data, opts)` - Send a custom SSE event
-- `send_event!(sse, event_type, data, opts)` - Send event, raising on error
-- `closed?(sse)` - Check if the connection is closed
+- `SSE.new(conn)` - Create a new SSE generator from a Plug connection
+- `SSE.send_event(sse, event_type, data, opts)` - Send a custom SSE event
+- `SSE.send_event!(sse, event_type, data, opts)` - Send event, raising on error
+- `SSE.closed?(sse)` - Check if the connection is closed
 
 ### Datastar.Signals
 
 Manage client-side reactive state:
 
-- `read(conn)` - Read signals from request (query params or body)
-- `read_as(conn, module)` - Read signals into a struct
-- `patch(sse, signals, opts)` - Update client-side signals
-- `patch_raw(sse, json, opts)` - Update with raw JSON
-- `patch_if_missing(sse, signals, opts)` - Update only missing signals
+- `Signals.read(conn)` - Read signals from request (query params or body)
+- `Signals.read_as(conn, module)` - Read signals into a struct
+- `Signals.patch(sse, signals, opts)` - Update client-side signals
+- `Signals.patch_raw(sse, json, opts)` - Update with raw JSON
+- `Signals.patch_if_missing(sse, signals, opts)` - Update only missing signals
 
 **Options:**
 - `:only_if_missing` - Only patch signals that don't exist on client
@@ -149,15 +164,20 @@ Manage client-side reactive state:
 
 Manipulate DOM elements:
 
-- `patch(sse, html, opts)` - Update elements with HTML
-- `patchf(sse, format, values, opts)` - Patch with formatted string
-- `patch_by_id(sse, id, html, opts)` - Patch element by ID
-- `remove(sse, selector, opts)` - Remove elements by selector
-- `remove_by_id(sse, id, opts)` - Remove element by ID
+- `Elements.patch(sse, html, opts)` - Update elements with HTML
+- `Elements.patchf(sse, format, values, opts)` - Patch with formatted string
+- `Elements.patch_by_id(sse, id, html, opts)` - Patch element by ID
+- `Elements.remove(sse, selector, opts)` - Remove elements by selector
+- `Elements.remove_by_id(sse, id, opts)` - Remove element by ID
 
 **Convenience functions:**
-- `patch_outer/3`, `patch_inner/3`, `patch_prepend/3`, `patch_append/3`
-- `patch_before/3`, `patch_after/3`, `patch_replace/3`
+- `Elements.patch_outer(sse, html, opts)` - Patch outer HTML
+- `Elements.patch_inner(sse, html, opts)` - Patch inner HTML
+- `Elements.patch_prepend(sse, html, opts)` - Patch prepend HTML
+- `Elements.patch_append(sse, html, opts)` - Patch append HTML
+- `Elements.patch_before(sse, html, opts)` - Patch before HTML
+- `Elements.patch_after(sse, html, opts)` - Patch after HTML
+- `Elements.patch_replace(sse, html, opts)` - Patch replace HTML
 
 **Options:**
 - `:selector` - CSS selector for target elements (required)
@@ -170,16 +190,16 @@ Manipulate DOM elements:
 
 Execute JavaScript and manage browser state:
 
-- `execute(sse, script, opts)` - Execute JavaScript code
-- `executef(sse, format, args, opts)` - Execute with formatting
-- `console_log(sse, message, opts)` - Log to browser console
-- `console_error(sse, message, opts)` - Log error to console
-- `redirect(sse, url, opts)` - Navigate to URL
-- `redirectf(sse, format, args, opts)` - Navigate with formatting
-- `replace_url(sse, url, opts)` - Update URL without navigation
-- `replace_url_querystring(sse, qs, opts)` - Update query string
-- `dispatch_custom_event(sse, event, detail, opts)` - Dispatch DOM event
-- `prefetch(sse, urls, opts)` - Prefetch URLs using Speculation Rules API
+- `Script.execute(sse, script, opts)` - Execute JavaScript code
+- `Script.executef(sse, format, args, opts)` - Execute with formatting
+- `Script.console_log(sse, message, opts)` - Log to browser console
+- `Script.console_error(sse, message, opts)` - Log error to console
+- `Script.redirect(sse, url, opts)` - Navigate to URL
+- `Script.redirectf(sse, format, args, opts)` - Navigate with formatting
+- `Script.replace_url(sse, url, opts)` - Update URL without navigation
+- `Script.replace_url_querystring(sse, qs, opts)` - Update query string
+- `Script.dispatch_custom_event(sse, event, detail, opts)` - Dispatch DOM event
+- `Script.prefetch(sse, urls, opts)` - Prefetch URLs using Speculation Rules API
 
 **Options:**
 - `:auto_remove` - Remove script element after execution (default: true)
@@ -225,6 +245,110 @@ defmodule MyAppWeb.CounterController do
     |> Script.dispatch_custom_event("counter-reset", %{})
   end
 end
+```
+
+## Signals.patch vs. Elements.patch
+
+| Method | Description |
+| --- | --- |
+| `Signals.patch` | Updates the state of a signal |
+| `Elements.patch` | Updates the HTML content of an element |
+
+"Will the client need this data?"
+- No -> Use only `Elements.patch` for updating HTML content.
+- Yes -> "Can I use Rocket?"
+  - Yes -> Use only `Signals.patch` for updating state and let your reactive component handle the UI updates.
+  - No -> Use `Signals.patch` for state updates and `Elements.patch` for UI updates.
+
+### Examples where you'd need both `Signals.patch` and `Elements.patch`
+
+See `examples/todo_list_example.ex`
+
+### Examples where you'd only want to use `Signals.patch`
+
+See `examples/rocket_todo_list_example.ex`
+
+### Examples where you'd need only `Elements.patch`
+
+#### 1. Ephemeral UI Updates (No State)
+When you want to show temporary feedback that doesn't represent application state:
+```elixir
+# Flash message that appears and disappears
+conn
+|> SSE.new()
+|> Elements.patch(
+  "<div class='notification'>Saved successfully!</div>",
+  selector: "#notifications",
+  mode: :append
+)
+# No signal needed - it's just a temporary message
+```
+
+#### 2. Server-Rendered Content Without Client State
+When the server is the single source of truth and client doesn't need to track the data:
+```elixir
+# Rendering a complex dashboard widget
+conn
+|> SSE.new()
+|> Elements.patch(
+  render_dashboard_widget(data),
+  selector: "#dashboard"
+)
+# Client doesn't need the underlying data in signals, just the rendered HTML
+```
+
+#### 3. Static Content Injection
+When you're adding content that won't be manipulated by client-side code:
+``` elixir
+# Appending a log entry
+conn
+|> SSE.new()
+|> Elements.patch(
+  "<div class='log-entry'>#{timestamp}: #{message}</div>",
+  selector: "#activity-log",
+  mode: :append
+)
+# No need for client to have log data in signals
+```
+
+#### 4. Performance Optimization for Large Lists
+When you have a list so large that keeping it in signals would be wasteful:
+```elixir
+# Infinite scroll - just append, don't track all items
+conn
+|> SSE.new()
+|> Elements.patch(
+  render_next_page_items(items),
+  selector: "#items-list",
+  mode: :append
+)
+# Signals would grow indefinitely, but DOM can be pruned
+```
+
+#### 5. Non-Reactive Components
+When you're updating parts of the UI that don't need reactivity:
+```elixir
+# Update a static timestamp
+conn
+|> SSE.new()
+|> Elements.patch(
+  "<span>Last updated: #{DateTime.utc_now()}</span>",
+  selector: "#last-updated"
+)
+# No reactive bindings needed
+```
+
+#### 6. Complex HTML That's Hard to Recreate from Signals
+When the HTML structure is too complex to feasibly render from signal data alone:
+```elixir
+# Rich formatted content with nested structure
+conn
+|> SSE.new()
+|> Elements.patch(
+  render_markdown_with_syntax_highlighting(content),
+  selector: "#article-body"
+)
+# Signals would be complex, HTML is easier
 ```
 
 ## Comparison with Go SDK
