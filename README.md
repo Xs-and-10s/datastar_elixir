@@ -32,7 +32,7 @@ end
 ```elixir
 defmodule MyAppWeb.DatastarController do
   use MyAppWeb, :controller
-  alias Datastar.{SSE, Elements, Signals}
+  alias Datastar.{SSE, Elements}
 
   def stream(conn, _params) do
     conn
@@ -43,6 +43,8 @@ defmodule MyAppWeb.DatastarController do
       "<div id='content'>Hello, Datastar!</div>",
       selector: "#content"
     )
+
+    conn
   end
 end
 ```
@@ -54,19 +56,18 @@ Signals represent client-side state that can be synchronized with the server:
 ```elixir
 def handle_request(conn, _params) do
   # Read signals from the request
-  signals = Datastar.Signals.read(conn)
-  count = signals["count"] || 0
+  signals = Signals.read(conn)
+  count = Map.get(signals, "count", 0)
+  new_count = count + 1
 
-  # Update the UI based on signals
+  # Update the client state
   conn
   |> put_resp_content_type("text/event-stream")
   |> send_chunked(200)
   |> SSE.new()
-  |> Signals.patch(%{count: count + 1})
-  |> Elements.patch(
-    "<div id='counter'>Count: #{count + 1}</div>",
-    selector: "#counter"
-  )
+  |> Signals.patch(%{count: new_count})
+
+  conn
 end
 ```
 
@@ -119,16 +120,7 @@ sse
 |> Script.replace_url("/new-path")
 
 # Custom events
-|> Script.dispatch_custom_event(
-  "user:updated",
-  %{id: 123, name: "Alice"}
-)
-# Custom events with callback
-|> Script.dispatch_custom_event(
-  "user:updated",
-  %{id: 123, name: "Alice"},
-  callback: "handleUserUpdate"
-)
+|> Script.dispatch_custom_event("user:updated", %{id: 123, name: "Alice"})
 
 # Prefetch URLs
 |> Script.prefetch(["/dashboard", "/profile"])
@@ -140,20 +132,20 @@ sse
 
 Core module for Server-Sent Event streaming:
 
-- `SSE.new(conn)` - Create a new SSE generator from a Plug connection
-- `SSE.send_event(sse, event_type, data, opts)` - Send a custom SSE event
-- `SSE.send_event!(sse, event_type, data, opts)` - Send event, raising on error
-- `SSE.closed?(sse)` - Check if the connection is closed
+- `new(conn)` - Create a new SSE generator from a Plug connection
+- `send_event(sse, event_type, data, opts)` - Send a custom SSE event
+- `send_event!(sse, event_type, data, opts)` - Send event, raising on error
+- `closed?(sse)` - Check if the connection is closed
 
 ### Datastar.Signals
 
 Manage client-side reactive state:
 
-- `Signals.read(conn)` - Read signals from request (query params or body)
-- `Signals.read_as(conn, module)` - Read signals into a struct
-- `Signals.patch(sse, signals, opts)` - Update client-side signals
-- `Signals.patch_raw(sse, json, opts)` - Update with raw JSON
-- `Signals.patch_if_missing(sse, signals, opts)` - Update only missing signals
+- `read(conn)` - Read signals from request (query params or body)
+- `read_as(conn, module)` - Read signals into a struct
+- `patch(sse, signals, opts)` - Update client-side signals
+- `patch_raw(sse, json, opts)` - Update with raw JSON
+- `patch_if_missing(sse, signals, opts)` - Update only missing signals
 
 **Options:**
 - `:only_if_missing` - Only patch signals that don't exist on client
@@ -164,20 +156,20 @@ Manage client-side reactive state:
 
 Manipulate DOM elements:
 
-- `Elements.patch(sse, html, opts)` - Update elements with HTML
-- `Elements.patchf(sse, format, values, opts)` - Patch with formatted string
-- `Elements.patch_by_id(sse, id, html, opts)` - Patch element by ID
-- `Elements.remove(sse, selector, opts)` - Remove elements by selector
-- `Elements.remove_by_id(sse, id, opts)` - Remove element by ID
+- `patch(sse, html, opts)` - Update elements with HTML
+- `patchf(sse, format, values, opts)` - Patch with formatted string
+- `patch_by_id(sse, id, html, opts)` - Patch element by ID
+- `remove(sse, selector, opts)` - Remove elements by selector
+- `remove_by_id(sse, id, opts)` - Remove element by ID
 
 **Convenience functions:**
-- `Elements.patch_outer(sse, html, opts)` - Patch outer HTML
-- `Elements.patch_inner(sse, html, opts)` - Patch inner HTML
-- `Elements.patch_prepend(sse, html, opts)` - Patch prepend HTML
-- `Elements.patch_append(sse, html, opts)` - Patch append HTML
-- `Elements.patch_before(sse, html, opts)` - Patch before HTML
-- `Elements.patch_after(sse, html, opts)` - Patch after HTML
-- `Elements.patch_replace(sse, html, opts)` - Patch replace HTML
+- `patch_outer(sse, html, opts)` - Replace outer HTML of element
+- `patch_inner(sse, html, opts)` - Replace inner HTML of element
+- `patch_prepend(sse, html, opts)` - Prepend HTML to element's children
+- `patch_append(sse, html, opts)` - Append HTML to element's children
+- `patch_before(sse, html, opts)` - Insert HTML before element
+- `patch_after(sse, html, opts)` - Insert HTML after element
+- `patch_replace(sse, html, opts)` - Replace element entirely
 
 **Options:**
 - `:selector` - CSS selector for target elements (required)
@@ -190,16 +182,16 @@ Manipulate DOM elements:
 
 Execute JavaScript and manage browser state:
 
-- `Script.execute(sse, script, opts)` - Execute JavaScript code
-- `Script.executef(sse, format, args, opts)` - Execute with formatting
-- `Script.console_log(sse, message, opts)` - Log to browser console
-- `Script.console_error(sse, message, opts)` - Log error to console
-- `Script.redirect(sse, url, opts)` - Navigate to URL
-- `Script.redirectf(sse, format, args, opts)` - Navigate with formatting
-- `Script.replace_url(sse, url, opts)` - Update URL without navigation
-- `Script.replace_url_querystring(sse, qs, opts)` - Update query string
-- `Script.dispatch_custom_event(sse, event, detail, opts)` - Dispatch DOM event
-- `Script.prefetch(sse, urls, opts)` - Prefetch URLs using Speculation Rules API
+- `execute(sse, script, opts)` - Execute JavaScript code
+- `executef(sse, format, args, opts)` - Execute with formatting
+- `console_log(sse, message, opts)` - Log to browser console
+- `console_error(sse, message, opts)` - Log error to console
+- `redirect(sse, url, opts)` - Navigate to URL
+- `redirectf(sse, format, args, opts)` - Navigate with formatting
+- `replace_url(sse, url, opts)` - Update URL without navigation
+- `replace_url_querystring(sse, qs, opts)` - Update query string
+- `dispatch_custom_event(sse, event, detail, opts)` - Dispatch DOM event
+- `prefetch(sse, urls, opts)` - Prefetch URLs using Speculation Rules API
 
 **Options:**
 - `:auto_remove` - Remove script element after execution (default: true)
@@ -209,17 +201,19 @@ Execute JavaScript and manage browser state:
 
 ## Complete Example
 
-Here's a complete example of a Phoenix LiveView-style counter:
+Here's a complete example of a reactive counter (see `examples/counter_example.ex` for full code):
+
+**Backend (Phoenix Controller):**
 
 ```elixir
 defmodule MyAppWeb.CounterController do
   use MyAppWeb, :controller
-  alias Datastar.{SSE, Elements, Signals, Script}
+  alias Datastar.{SSE, Signals, Script}
 
   def increment(conn, _params) do
     # Read current count from client
     signals = Signals.read(conn)
-    current_count = signals["count"] || 0
+    current_count = Map.get(signals, "count", 0)
     new_count = current_count + 1
 
     # Stream updates back
@@ -228,24 +222,27 @@ defmodule MyAppWeb.CounterController do
     |> send_chunked(200)
     |> SSE.new()
     |> Signals.patch(%{count: new_count})
-    |> Elements.patch(
-      "<div>Count: #{new_count}</div>",
-      selector: "#counter"
-    )
     |> Script.console_log("Count updated to #{new_count}")
-  end
+    |> Script.dispatch_custom_event("counter:changed", %{value: new_count, action: "increment"})
 
-  def reset(conn, _params) do
     conn
-    |> put_resp_content_type("text/event-stream")
-    |> send_chunked(200)
-    |> SSE.new()
-    |> Signals.patch(%{count: 0})
-    |> Elements.patch("<div>Count: 0</div>", selector: "#counter")
-    |> Script.dispatch_custom_event("counter-reset", %{})
   end
 end
 ```
+
+**Frontend HTML:**
+
+```html
+<div id="counter-app" data-signals="{count: 0}">
+  <h1>Counter</h1>
+  <div id="counter-display">Count: <span data-text="$count"></span></div>
+  <button data-on:click="@get('/counter/increment')">Increment</button>
+</div>
+
+<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.5/bundles/datastar.js"></script>
+```
+
+The server only needs to update the signal - Datastar's `data-text` binding automatically updates the UI!
 
 ## Signals.patch vs. Elements.patch
 
