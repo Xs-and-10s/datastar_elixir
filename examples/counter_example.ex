@@ -53,15 +53,13 @@ defmodule Datastar.Examples.CounterExample do
     new_count = current_count + 1
 
     # Send SSE updates
+    # Note: We only need to patch the signal - Datastar's data-text binding
+    # automatically updates the UI when $count changes
     conn
     |> Plug.Conn.put_resp_content_type("text/event-stream")
     |> Plug.Conn.send_chunked(200)
     |> SSE.new()
     |> Signals.patch(%{count: new_count})
-    |> Elements.patch(
-      "<div id='counter-display'>Count: #{new_count}</div>",
-      selector: "#counter-display"
-    )
     |> Script.console_log("Counter incremented to #{new_count}")
     |> Script.dispatch_custom_event("counter:changed", %{value: new_count, action: "increment"})
 
@@ -81,10 +79,6 @@ defmodule Datastar.Examples.CounterExample do
     |> Plug.Conn.send_chunked(200)
     |> SSE.new()
     |> Signals.patch(%{count: new_count})
-    |> Elements.patch(
-      "<div id='counter-display'>Count: #{new_count}</div>",
-      selector: "#counter-display"
-    )
     |> Script.console_log("Counter decremented to #{new_count}")
     |> Script.dispatch_custom_event("counter:changed", %{value: new_count, action: "decrement"})
 
@@ -100,10 +94,6 @@ defmodule Datastar.Examples.CounterExample do
     |> Plug.Conn.send_chunked(200)
     |> SSE.new()
     |> Signals.patch(%{count: 0})
-    |> Elements.patch(
-      "<div id='counter-display'>Count: 0</div>",
-      selector: "#counter-display"
-    )
     |> Script.console_log("Counter reset to 0")
     |> Script.dispatch_custom_event("counter:changed", %{value: 0, action: "reset"})
 
