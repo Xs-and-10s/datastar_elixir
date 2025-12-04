@@ -348,15 +348,6 @@ conn
 # Signals would be complex, HTML is easier
 ```
 
-## Comparison with Go SDK
-
-This Elixir SDK closely follows the design of the [Go implementation](https://github.com/starfederation/datastar-go), with idiomatic Elixir adaptations:
-
-- **Functional API**: Methods return updated SSE structs for easy piping
-- **Pattern Matching**: Leverage Elixir's pattern matching for cleaner code
-- **Keyword Options**: Use keyword lists instead of functional options
-- **Error Handling**: Provide both safe (`{:ok, result}`) and bang (`result!`) variants
-
 ## Requirements
 
 - Elixir 1.14 or later
@@ -373,7 +364,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Resources
 
 - [Datastar Official Documentation](https://data-star.dev)
-- [Datastar Go SDK](https://github.com/starfederation/datastar-go)
 - [Server-Sent Events Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 ## Acknowledgments
