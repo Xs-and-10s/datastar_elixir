@@ -70,7 +70,7 @@ defmodule Datastar.Examples.TodoListExample do
 
     # Render the new todo item
     todo_html = """
-    <li id="todo-#{id}" class="todo-item">
+    <li id="todo-#{id}">
       <input type="checkbox" data-on:change="@post('/todos/#{id}/toggle')" />
       <span>#{text}</span>
       <button data-on:click="@delete('/todos/#{id}')">Delete</button>
@@ -89,6 +89,7 @@ defmodule Datastar.Examples.TodoListExample do
       use_view_transitions: true
     )
     |> Script.console_log("Added todo: #{text}")
+    |> Script.dispatch_custom_event("todo:added", %{id: id, text: text})
 
     conn
   end
@@ -111,6 +112,7 @@ defmodule Datastar.Examples.TodoListExample do
     |> Signals.patch(%{todos: updated_todos})
     |> Elements.remove("#todo-#{id}")
     |> Script.console_log("Removed todo: #{id}")
+    |> Script.dispatch_custom_event("todo:removed", %{id: id})
 
     conn
   end
@@ -135,19 +137,25 @@ defmodule Datastar.Examples.TodoListExample do
 
     # Find the toggled todo
     toggled_todo = Enum.find(updated_todos, &(&1["id"] == id))
+    is_completed = toggled_todo["completed"]
 
-    # Update the UI
-    class_name = if toggled_todo["completed"], do: "completed", else: ""
+    # Re-render the todo item with updated state
+    todo_html = """
+    <li id="todo-#{id}"#{if is_completed, do: " class=\"completed\"", else: ""}>
+      <input type="checkbox"#{if is_completed, do: " checked", else: ""} data-on:change="@post('/todos/#{id}/toggle')" />
+      <span>#{toggled_todo["text"]}</span>
+      <button data-on:click="@delete('/todos/#{id}')">Delete</button>
+    </li>
+    """
 
     conn
     |> Plug.Conn.put_resp_content_type("text/event-stream")
     |> Plug.Conn.send_chunked(200)
     |> SSE.new()
     |> Signals.patch(%{todos: updated_todos})
-    |> Script.execute("""
-      document.getElementById('todo-#{id}').classList.toggle('completed');
-    """)
+    |> Elements.patch(todo_html, selector: "#todo-#{id}")
     |> Script.console_log("Toggled todo: #{id}")
+    |> Script.dispatch_custom_event("todo:toggled", %{id: id, completed: is_completed})
 
     conn
   end
